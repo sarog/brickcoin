@@ -48,7 +48,7 @@ window.onload = function () {
   });
 
   // Load saved values on page load
-  loadFromChromeStorage(countrySelect, languageSelect);
+  loadFromBrowserStorage(countrySelect, languageSelect);
 
   // Update the language dropdown when a country is selected
   countrySelect.addEventListener("change", function () {
@@ -58,25 +58,25 @@ window.onload = function () {
     }
 
     // Save the selected country and reset language selection
-    saveToChromeStorage(this.value, languageSelect.value || "");
+    saveToBrowserStorage(this.value, languageSelect.value || "");
   });
 
   // Save the selected language when it changes
   languageSelect.addEventListener("change", function () {
-    saveToChromeStorage(countrySelect.value, this.value);
+    saveToBrowserStorage(countrySelect.value, this.value);
   });
 };
 
 
-// Save data to Chrome storage
-function saveToChromeStorage(countryCode, languageCode) {
+// Save data to Browser storage
+function saveToBrowserStorage(countryCode, languageCode) {
   chrome.storage.sync.set({ country_code: countryCode, language_code: languageCode }, () => {
     console.log("Settings saved:", { country_code: countryCode, language_code: languageCode });
   });
 }
 
-// Load saved data from Chrome storage
-function loadFromChromeStorage(countrySelect, languageSelect) {
+// Load saved data from Browser storage
+function loadFromBrowserStorage(countrySelect, languageSelect) {
   chrome.storage.sync.get(["country_code", "language_code"], (result) => {
     if (result.country_code) {
       countrySelect.value = result.country_code;

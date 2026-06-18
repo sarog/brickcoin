@@ -2,7 +2,7 @@ let legoToBricklinkColors = {};
 let bricklinkToLegoIds = {};
 let legoToBricklinkId = {};
 
-let legoAutho = null
+let legoAuth = null
 let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:151.0) Gecko/20100101 Firefox/151.0";
 
 // chrome.chromeAction.onClicked.addListener(() => {
@@ -302,7 +302,7 @@ function processLegoItems(items, allExtractedItems) {
   });
 }
 
-function createPreparecheckoutHeaders(locale) {
+function createPrepareCheckoutHeaders(locale) {
   console.log(locale)
   return {
     "User-Agent": userAgent,
@@ -320,7 +320,7 @@ async function handleCheckoutRequest(details) {
       const response = await fetch(details.url, {
         method: details.method,
         body: details.requestBody ? new URLSearchParams(details.requestBody.formData) : undefined,
-        header: createPreparecheckoutHeaders()
+        header: createPrepareCheckoutHeaders()
       });
       const responseData = await response.json();
       const sids = responseData.sellers.map((item) => item.sid);
@@ -365,15 +365,14 @@ function removeFromCart(items, sid) {
   });
 }
 
-async function requestLegoAutho() {
+async function requestLegoAuth() {
   try {
     const tabs = await chrome.tabs.query({ url: '*://*.lego.com/*', status: 'complete' });
     console.log(tabs)
     if (tabs.length > 0) {
       response = await chrome.tabs.sendMessage(tabs[0].id, { action: "readCookieGQAuth" });
       console.log('cookies', response);
-      legoAutho = response.gqauth
-      
+      legoAuth = response.gqauth
     } else {
       console.log("No matching tabs found.");
     }
@@ -389,7 +388,7 @@ function formatItems4Pab(items) {
 async function add2Pab(items, cartType, locale) {
   console.log(items, cartType)
   console.log(formatItems4Pab(items))
-  console.log(legoAutho)
+  console.log(legoAuth)
   var PickABrickQuery = {
     operationName: 'ElementCartsAddToCart',
     variables: {
@@ -410,7 +409,7 @@ async function add2Pab(items, cartType, locale) {
     headers: {
       'Content-Type': 'application/json',
       'x-locale':  locale,
-      authorization: legoAutho,
+      'authorization': legoAuth,
     },
     body: JSON.stringify(PickABrickQuery),
   });
@@ -451,10 +450,10 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   // Check if the message is for the button click
   if (request.action === "add_2_pab") {
     var locale = await getLegoConfig()
-    if (legoAutho == null) {
-      await requestLegoAutho()
+    if (legoAuth == null) {
+      await requestLegoAuth()
       console.log('FETCH cookies')
-      console.log(legoAutho)
+      console.log(legoAuth)
     }
     add2Pab(request.items, request.cartType, locale)
     

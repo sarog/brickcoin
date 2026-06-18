@@ -80,7 +80,7 @@ function updateData(sellerData) {
                     <th>Lego Type</th>
                     <th>Total Bricklink</th>
                     <th>Total Lego</th>
-                    <th>Save Up To</th>
+                    <th>Savings</th>
                     <th></th>
                     <th></th>
                 </tr>`;
