@@ -272,13 +272,34 @@ function createLegoHeaders(locale) {
 function createLegoRequestBody(itemNos, page) {
   return {
     operationName: "PickABrickQuery",
-    variables: { input: { perPage: 400, query: itemNos, page } },
-    query: `query PickABrickQuery($input: ElementQueryInput!) { 
-              searchElements(input: $input) { 
-                results { id designId name imageUrl maxOrderQuantity deliveryChannel price { currencyCode centAmount formattedAmount } facets { color { key name } } inStock } 
-                total count 
-              } 
-            }`,
+    variables: { input: { perPage: 400, query: itemNos, page, fetchSiblings: true } },
+    query: `query PickABrickQuery($input: ElementQueryInput!, $sku: String) {
+              searchElements(input: $input) {
+                results { ...ElementLeaf __typename } facets { ...FacetData __typename } set { id type name imageUrl instructionsUrl pieces inStock 
+                price { formattedAmount __typename } __typename } total count __typename } 
+                }
+            fragment FacetData on Facet {
+              id key name
+              labels {
+                count key name children { count key name ... on FacetValue { value __typename } __typename } ... on FacetValue { value __typename }
+                ... on FacetRange { from to __typename } __typename
+              }
+              __typename
+            }
+            fragment ElementLeaf on SearchResultElement {
+              id designId collapseDesignId name imageUrl maxOrderQuantity deliveryChannel colorHex contrastColorHex
+              price { centAmount formattedAmount currencyCode formattedValue __typename }
+              quantityInSet(sku: $sku)
+              facets {
+                category { ...ElementFacetCategory __typename } subcategory { ...ElementFacetCategory __typename }
+                color { ...ElementFacetCategory __typename } colorFamily { ...ElementFacetCategory __typename }
+                system __typename
+              }
+              siblings { id colorHex contrastColorHex availability price { formattedAmount formattedValue __typename } __typename }
+              availability __typename
+            }
+            fragment ElementFacetCategory on ElementCategory { name key __typename }
+            `,
   };
 }
 
