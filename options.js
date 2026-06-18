@@ -10,8 +10,8 @@ const language_to_country_code = {
   'da': 'DK',
   'cs': 'CZ',
   'et': 'EE',
-
 };
+
 // Helper function to get language flag/icon (placeholder for now)
 const getFlagEmoji = (countryCode, is_language_code) => {
   if (is_language_code) {
