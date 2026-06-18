@@ -3,6 +3,7 @@ let bricklinkToLegoIds = {};
 let legoToBricklinkId = {};
 
 let legoAutho = null
+let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:151.0) Gecko/20100101 Firefox/151.0";
 
 // chrome.chromeAction.onClicked.addListener(() => {
 //   chrome.runtime.openOptionsPage().catch((error) => {
@@ -204,9 +205,8 @@ async function updateData(sellerData) {
 
 function createCartHeaders(sid) {
   return {
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0",
-    Accept: "application/json, text/javascript, */*; q=0.01",
+    "User-Agent": userAgent,
+    "Accept": "application/json, text/javascript, */*; q=0.01",
     "Accept-Language": "en-US,en;q=0.5",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     "X-Requested-With": "XMLHttpRequest",
@@ -301,7 +301,7 @@ function processLegoItems(items, allExtractedItems) {
 function createPreparecheckoutHeaders(locale) {
   console.log(locale)
   return {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
+    "User-Agent": userAgent,
     "Accept": "application/json, text/javascript, */*; q=0.01",
     "Accept-Language": "en-US,en;q=0.5",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
