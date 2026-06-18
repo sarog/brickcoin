@@ -18,9 +18,9 @@ const getFlagEmoji = (countryCode, is_language_code) => {
     countryCode = language_to_country_code[countryCode] || countryCode;
   }
   const codePoints = countryCode
-      .toUpperCase()
-      .split('')
-      .map((char) => 127397 + char.charCodeAt(0))
+    .toUpperCase()
+    .split('')
+    .map((char) => 127397 + char.charCodeAt(0))
   return String.fromCodePoint(...codePoints)
 }
 
@@ -66,7 +66,6 @@ window.onload = function () {
     saveToBrowserStorage(countrySelect.value, this.value);
   });
 };
-
 
 // Save data to Browser storage
 function saveToBrowserStorage(countryCode, languageCode) {
