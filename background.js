@@ -397,7 +397,30 @@ async function add2Pab(items, cartType, locale) {
       returnCarts: [],
     },
     query:
-      'mutation ElementCartsAddToCart($items: [ElementInput!]!, $cartType: CartType!, $returnCarts: [CartType!]!) {\n  elementCartsAddToCart(\n    input: {items: $items, cartType: $cartType, returnCarts: $returnCarts}\n  ) {\n    carts {\n      ...BrickCartData\n    }\n  }\n}\n\nfragment BrickCartData on BrickCart {\n  id\n}\n',
+      `mutation ElementCartsAddToCart($items: [ElementInput!]!, $cartType: CartType!, $returnCarts: [CartType!]!) {
+          elementCartsAddToCart(input: {items: $items, cartType: $cartType, returnCarts: $returnCarts}
+          ) { carts { ...BrickCartData ...ElementCartData ...MinifigureCartData __typename } ...CartsAmountData __typename } }
+        fragment ElementCartData on ElementCart {
+          id type taxedPrice { totalGross { formattedAmount formattedValue currencyCode __typename } __typename }
+          totalPrice { formattedAmount formattedValue currencyCode __typename } subTotal { formattedAmount formattedValue __typename }
+          shippingMethod { price { formattedAmount __typename } shippingRate { formattedAmount __typename }
+          minimumFreeShippingAmount { formattedAmount formattedValue __typename } isFree __typename } potentialVipPoints __typename
+        }
+        fragment BrickCartData on BrickCart { brickLineItems { ...BrickLineItemData __typename } __typename }
+        fragment BrickLineItemData on BrickCartLineItemElement {
+          id sku name designId imageUrl maxOrderQuantity deliveryChannel price { centAmount currencyCode formattedAmount __typename }
+          quantity totalPrice { formattedAmount __typename } __typename
+        }
+        fragment CartsAmountData on ElementCarts {
+          id orderFee { formattedAmount __typename } subtotal { centAmount formattedAmount __typename } totalPrice { formattedAmount __typename } 
+          zeroCurrency { formattedAmount currencyCode __typename } __typename
+        }
+        fragment MinifigureCartData on MinifigureCart { id minifigureData { ...MinifigureDataTupleData __typename } __typename }
+        fragment MinifigureDataTupleData on MinifigureDataTuple { figureId minifigureElements { ...MinifigureLineItem __typename } __typename }
+        fragment MinifigureLineItem on MinifigureCartLineItemElement {
+          id sku name designId imageUrl maxOrderQuantity deliveryChannel price { centAmount currencyCode formattedAmount __typename }
+          quantity totalPrice { formattedAmount __typename } backImageUrl isShort metadata { minifigureCategory bamFigureId __typename } __typename
+        }`
   };
 
   var url = 'https://www.lego.com/api/graphql/AddToElementCart';
