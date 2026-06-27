@@ -474,7 +474,7 @@ async function add2Pab(items, cartType, locale) {
 
 async function openPickABrick() {
   let locale = await getLegoConfig()
-  var url = `https://www.lego.com/${locale}/page/static/pick-a-brick`;
+  var url = `https://www.lego.com/${locale}/pick-and-build/pick-a-brick`;
 
   const tabs = await chrome.tabs.query({url: '*://*.lego.com/*', status: 'complete'});
   if (tabs.length > 0) {
