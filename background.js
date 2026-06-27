@@ -2,7 +2,8 @@ let legoToBricklinkColors = {};
 let bricklinkToLegoIds = {};
 let legoToBricklinkId = {};
 
-let legoAutho = null
+let legoAuth = null
+let userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:151.0) Gecko/20100101 Firefox/151.0";
 
 // chrome.chromeAction.onClicked.addListener(() => {
 //   chrome.runtime.openOptionsPage().catch((error) => {
@@ -128,16 +129,23 @@ async function fetchCartData(sids) {
 }
 
 function compareBricklinkAndPAB(items, allExtractedItems) {
-  comparison = {'pab': {'totalSave': 0, 'listOfItems': [], 'total_bricklink': 0, 'total_lego': 0}, 'bap': {'totalSave': 0, 'listOfItems': [], 'total_bricklink': 0, 'total_lego': 0}, 
-                'pab_bricklink': {'totalSave': 0, 'listOfItems': [], 'total_bricklink': 0, 'total_lego': 0},  'bap_bricklink': {'totalSave': 0, 'listOfItems': [], 'total_bricklink': 0, 'total_lego': 0},
-                'bricklink': {'listOfItems': [], 'total_bricklink': 0}, 'legoCurrency': null, 'cartCurrency': null}
+  let comparison = {
+    'pab': {'totalSave': 0, 'listOfItems': [], 'total_bricklink': 0, 'total_lego': 0},
+    'bap': {'totalSave': 0, 'listOfItems': [], 'total_bricklink': 0, 'total_lego': 0},
+    'pab_bricklink': {'totalSave': 0, 'listOfItems': [], 'total_bricklink': 0, 'total_lego': 0},
+    'bap_bricklink': {'totalSave': 0, 'listOfItems': [], 'total_bricklink': 0, 'total_lego': 0},
+    'bricklink': {'listOfItems': [], 'total_bricklink': 0},
+    'legoCurrency': null,
+    'cartCurrency': null
+  }
   console.log(items)
+  let is_ok;
   for (let item of items) {
     console.log(item);
-    if (item.itemNo in bricklinkToLegoIds){
+    if (item.itemNo in bricklinkToLegoIds) {
       is_ok = false;
       for (let legoId of bricklinkToLegoIds[item.itemNo]) {
-        if (legoId in allExtractedItems && item.colorID in  allExtractedItems[legoId]){
+        if (legoId in allExtractedItems && item.colorID in allExtractedItems[legoId]) {
           legoItem = allExtractedItems[legoId][item.colorID]
           if (comparison.legoCurrency == null) {
             comparison.legoCurrency = legoItem.legoCurrency
@@ -151,66 +159,62 @@ function compareBricklinkAndPAB(items, allExtractedItems) {
             comparison[legoItem.cartType].total_lego += (legoItem.price / 100) * item.cartQty
             comparison[legoItem.cartType].total_bricklink += item.unitPrice * item.cartQty
           } else {
-            comparison[`${legoItem.cartType}_bricklink`].totalSave += ((legoItem.price / 100) - item.unitPrice ) * item.cartQty
+            comparison[`${legoItem.cartType}_bricklink`].totalSave += ((legoItem.price / 100) - item.unitPrice) * item.cartQty
             comparison[`${legoItem.cartType}_bricklink`].listOfItems.push({'sku': legoItem.sku, 'quantity': item.cartQty, 'invID': item.invID})
             comparison[`${legoItem.cartType}_bricklink`].total_lego += (legoItem.price / 100) * item.cartQty
             comparison[`${legoItem.cartType}_bricklink`].total_bricklink += item.unitPrice * item.cartQty
-          } 
+          }
           is_ok = true;
           break;
         }
-      } 
-      if(!is_ok) {
+      }
+      if (!is_ok) {
         comparison.bricklink.listOfItems.push({'quantity': item.cartQty, 'invID': item.invID})
         comparison.bricklink.total_bricklink += item.unitPrice * item.cartQty
       }
-    }
-    else {
+    } else {
       console.log('3 ITEM', item.itemNo, item.colorID)
       comparison.bricklink.listOfItems.push({'quantity': item.cartQty, 'invID': item.invID})
       comparison.bricklink.total_bricklink += item.unitPrice * item.cartQty
     }
     if (comparison.cartCurrency == null) {
       comparison.cartCurrency = item.cartCurrency;
+    } else if (comparison.cartCurrency != item.cartCurrency) {
+      comparison.cartCurrency = 'ERROR2';
     }
-    else if (comparison.cartCurrency != item.cartCurrency) {
-      comparison.cartCurrency = 'ERROR';
-    }
-    
   }
   return comparison
 }
 
 async function addLoader() {
-  chrome.tabs.query({url: '*://www.bricklink.com/v2/globalcart*'}, function(tabs) {
+  chrome.tabs.query({url: '*://www.bricklink.com/v2/globalcart*'}, function (tabs) {
     chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        files: ["content.js"]
+      target: {tabId: tabs[0].id},
+      files: ["content.js"]
     }).then(() => {
-        // After ensuring the script is loaded, send the message
-        chrome.tabs.sendMessage(tabs[0].id, { action: "addLoader" });
+      // After ensuring the script is loaded, send the message
+      chrome.tabs.sendMessage(tabs[0].id, {action: "addLoader"});
     }).catch((error) => {
-        console.error("Failed to inject content script:", error);
+      console.error("Failed to inject content script:", error);
     });
-});
+  });
 }
 
 async function updateData(sellerData) {
   console.log('update')
-  chrome.tabs.query({url: '*://www.bricklink.com/v2/globalcart*'}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "updateData", sellerData: sellerData });
-    });
+  chrome.tabs.query({url: '*://www.bricklink.com/v2/globalcart*'}, function (tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {action: "updateData", sellerData: sellerData});
+  });
 }
 
 function createCartHeaders(sid) {
   return {
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0",
-    Accept: "application/json, text/javascript, */*; q=0.01",
+    "User-Agent": userAgent,
+    "Accept": "application/json, text/javascript, */*; q=0.01",
     "Accept-Language": "en-US,en;q=0.5",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     "X-Requested-With": "XMLHttpRequest",
-    referrer: `https://www.bricklink.com/v2/globalcart.page?sid=${sid}`,
+    "Referer": `https://www.bricklink.com/v2/globalcart.page?sid=${sid}`,
   };
 }
 
@@ -225,7 +229,7 @@ function extractCartItems(cartItems, currency) {
     cartCurrency: currency,
     // totalNativeSalePriceRaw: parseFloat(item.totalSalePrice.replace(/[^\d\.]*/g, '')),
     totalNativeSalePriceRaw: item.totalNativeSalePriceRaw,
-    unitPrice: parseFloat(item.totalSalePrice	.replace(/[^\d\.]*/g, '')) / item.cartQty,
+    unitPrice: parseFloat(item.totalSalePrice.replace(/[^\d\.]*/g, '')) / item.cartQty,
     invID: item.invID
   }));
 }
@@ -240,8 +244,8 @@ async function fetchLegoData(locale, itemNos, page = 1, allExtractedItems = {}) 
         method: "POST",
       }
     );
-    const data = await response.json();
 
+    const data = await response.json();
     if (data && data.data && data.data.searchElements) {
       processLegoItems(data.data.searchElements.results, allExtractedItems);
 
@@ -268,13 +272,34 @@ function createLegoHeaders(locale) {
 function createLegoRequestBody(itemNos, page) {
   return {
     operationName: "PickABrickQuery",
-    variables: { input: { perPage: 400, query: itemNos, page } },
-    query: `query PickABrickQuery($input: ElementQueryInput!) { 
-              searchElements(input: $input) { 
-                results { id designId name imageUrl maxOrderQuantity deliveryChannel price { currencyCode centAmount formattedAmount } facets { color { key name } } inStock } 
-                total count 
-              } 
-            }`,
+    variables: { input: { perPage: 400, query: itemNos, page, fetchSiblings: true } },
+    query: `query PickABrickQuery($input: ElementQueryInput!, $sku: String) {
+              searchElements(input: $input) {
+                results { ...ElementLeaf __typename } facets { ...FacetData __typename } set { id type name imageUrl instructionsUrl pieces inStock 
+                price { formattedAmount __typename } __typename } total count __typename } 
+                }
+            fragment FacetData on Facet {
+              id key name
+              labels {
+                count key name children { count key name ... on FacetValue { value __typename } __typename } ... on FacetValue { value __typename }
+                ... on FacetRange { from to __typename } __typename
+              }
+              __typename
+            }
+            fragment ElementLeaf on SearchResultElement {
+              id designId collapseDesignId name imageUrl maxOrderQuantity deliveryChannel colorHex contrastColorHex
+              price { centAmount formattedAmount currencyCode formattedValue __typename }
+              quantityInSet(sku: $sku)
+              facets {
+                category { ...ElementFacetCategory __typename } subcategory { ...ElementFacetCategory __typename }
+                color { ...ElementFacetCategory __typename } colorFamily { ...ElementFacetCategory __typename }
+                system __typename
+              }
+              siblings { id colorHex contrastColorHex availability price { formattedAmount formattedValue __typename } __typename }
+              availability __typename
+            }
+            fragment ElementFacetCategory on ElementCategory { name key __typename }
+            `,
   };
 }
 
@@ -298,16 +323,17 @@ function processLegoItems(items, allExtractedItems) {
   });
 }
 
-function createPreparecheckoutHeaders(locale) {
+function createPrepareCheckoutHeaders(locale) {
   console.log(locale)
   return {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
+    "User-Agent": userAgent,
     "Accept": "application/json, text/javascript, */*; q=0.01",
     "Accept-Language": "en-US,en;q=0.5",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     "X-Requested-With": "XMLHttpRequest"
   };
 }
+
 async function handleCheckoutRequest(details) {
   console.log(details)
   if ((details.method === "POST" || details.method === "GET") && (('originUrl' in details && details.originUrl.startsWith("https://www.bricklink.com")) || ('initiator' in details && details.initiator.startsWith("https://www.bricklink.com"))) ) {
@@ -315,7 +341,7 @@ async function handleCheckoutRequest(details) {
       const response = await fetch(details.url, {
         method: details.method,
         body: details.requestBody ? new URLSearchParams(details.requestBody.formData) : undefined,
-        header: createPreparecheckoutHeaders()
+        header: createPrepareCheckoutHeaders()
       });
       const responseData = await response.json();
       const sids = responseData.sellers.map((item) => item.sid);
@@ -328,7 +354,6 @@ async function handleCheckoutRequest(details) {
     }
   }
 }
-
 
 chrome.webRequest.onBeforeRequest.addListener(
   handleCheckoutRequest,
@@ -344,9 +369,10 @@ function createRemoveCartHeader() {
     "accept-language": "en-US,en;q=0.9,fr;q=0.8",
     "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     "priority": "u=1, i",
-    "x-requested-with": "XMLHttpRequest",
+    "X-Requested-With": "XMLHttpRequest",
   }
 }
+
 function removeFromCart(items, sid) {
   let itemArray = []
   let superlotArray = []
@@ -360,15 +386,14 @@ function removeFromCart(items, sid) {
   });
 }
 
-async function requestLegoAutho() {
+async function requestLegoAuth() {
   try {
     const tabs = await chrome.tabs.query({ url: '*://*.lego.com/*', status: 'complete' });
     console.log(tabs)
     if (tabs.length > 0) {
       response = await chrome.tabs.sendMessage(tabs[0].id, { action: "readCookieGQAuth" });
       console.log('cookies', response);
-      legoAutho = response.gqauth
-      
+      legoAuth = response.gqauth
     } else {
       console.log("No matching tabs found.");
     }
@@ -380,10 +405,11 @@ async function requestLegoAutho() {
 function formatItems4Pab(items) {
   return items.map((item) => ({sku: item.sku, quantity: item.quantity}));
 }
+
 async function add2Pab(items, cartType, locale) {
   console.log(items, cartType)
   console.log(formatItems4Pab(items))
-  console.log(legoAutho)
+  console.log(legoAuth)
   var PickABrickQuery = {
     operationName: 'ElementCartsAddToCart',
     variables: {
@@ -392,19 +418,42 @@ async function add2Pab(items, cartType, locale) {
       returnCarts: [],
     },
     query:
-      'mutation ElementCartsAddToCart($items: [ElementInput!]!, $cartType: CartType!, $returnCarts: [CartType!]!) {\n  elementCartsAddToCart(\n    input: {items: $items, cartType: $cartType, returnCarts: $returnCarts}\n  ) {\n    carts {\n      ...BrickCartData\n    }\n  }\n}\n\nfragment BrickCartData on BrickCart {\n  id\n}\n',
+      `mutation ElementCartsAddToCart($items: [ElementInput!]!, $cartType: CartType!, $returnCarts: [CartType!]!) {
+          elementCartsAddToCart(input: {items: $items, cartType: $cartType, returnCarts: $returnCarts}
+          ) { carts { ...BrickCartData ...ElementCartData ...MinifigureCartData __typename } ...CartsAmountData __typename } }
+        fragment ElementCartData on ElementCart {
+          id type taxedPrice { totalGross { formattedAmount formattedValue currencyCode __typename } __typename }
+          totalPrice { formattedAmount formattedValue currencyCode __typename } subTotal { formattedAmount formattedValue __typename }
+          shippingMethod { price { formattedAmount __typename } shippingRate { formattedAmount __typename }
+          minimumFreeShippingAmount { formattedAmount formattedValue __typename } isFree __typename } potentialVipPoints __typename
+        }
+        fragment BrickCartData on BrickCart { brickLineItems { ...BrickLineItemData __typename } __typename }
+        fragment BrickLineItemData on BrickCartLineItemElement {
+          id sku name designId imageUrl maxOrderQuantity deliveryChannel price { centAmount currencyCode formattedAmount __typename }
+          quantity totalPrice { formattedAmount __typename } __typename
+        }
+        fragment CartsAmountData on ElementCarts {
+          id orderFee { formattedAmount __typename } subtotal { centAmount formattedAmount __typename } totalPrice { formattedAmount __typename } 
+          zeroCurrency { formattedAmount currencyCode __typename } __typename
+        }
+        fragment MinifigureCartData on MinifigureCart { id minifigureData { ...MinifigureDataTupleData __typename } __typename }
+        fragment MinifigureDataTupleData on MinifigureDataTuple { figureId minifigureElements { ...MinifigureLineItem __typename } __typename }
+        fragment MinifigureLineItem on MinifigureCartLineItemElement {
+          id sku name designId imageUrl maxOrderQuantity deliveryChannel price { centAmount currencyCode formattedAmount __typename }
+          quantity totalPrice { formattedAmount __typename } backImageUrl isShort metadata { minifigureCategory bamFigureId __typename } __typename
+        }`
   };
+
   var url = 'https://www.lego.com/api/graphql/AddToElementCart';
 
   // Fetch request to the API
-
   var response = await fetch(url, {
     method: 'POST',
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',
       'x-locale':  locale,
-      authorization: legoAutho,
+      'authorization': legoAuth,
     },
     body: JSON.stringify(PickABrickQuery),
   });
@@ -424,22 +473,18 @@ async function add2Pab(items, cartType, locale) {
 }
 
 async function openPickABrick() {
-  locale = await getLegoConfig()
-  var url = `https://www.lego.com/${locale}/page/static/pick-a-brick`;
+  let locale = await getLegoConfig()
+  var url = `https://www.lego.com/${locale}/pick-and-build/pick-a-brick`;
 
-  const tabs = await chrome.tabs.query({ url: '*://*.lego.com/*', status: 'complete' });
+  const tabs = await chrome.tabs.query({url: '*://*.lego.com/*', status: 'complete'});
   if (tabs.length > 0) {
-    chrome.tabs
-    .update(tabs[0].id, {
+    chrome.tabs.update(tabs[0].id, {
       url: url,
       active: true,
-    })
-    .catch(error => console.log(error));
-  }
-  else {
+    }).catch(error => console.log(error));
+  } else {
     chrome.tabs.create({url: url, active: true})
   }
-  
 
   return true;
 }
@@ -449,10 +494,10 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
   // Check if the message is for the button click
   if (request.action === "add_2_pab") {
     var locale = await getLegoConfig()
-    if (legoAutho == null) {
-      await requestLegoAutho()
+    if (legoAuth == null) {
+      await requestLegoAuth()
       console.log('FETCH cookies')
-      console.log(legoAutho)
+      console.log(legoAuth)
     }
     add2Pab(request.items, request.cartType, locale)
     
