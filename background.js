@@ -51,7 +51,6 @@ async function getLegoConfig() {
   return `${items.language_code}-${items.country_code}`;
 }
 
-
 async function loadColorMappings() {
   try {
     const response = await fetch(

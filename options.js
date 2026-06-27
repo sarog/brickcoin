@@ -37,11 +37,9 @@ window.onload = function () {
     option.value = country.country_code;
     option.textContent = country.country_label;
 
-
     const optionWrapper = document.createElement("div");
     const countryFlag = getFlagEmoji(country.country_code, false);
     optionWrapper.appendChild(document.createTextNode(`${countryFlag} ${country.country_label}`));
-
 
     option.innerHTML = optionWrapper.innerHTML;
     countrySelect.appendChild(option);
